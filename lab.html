@@ -13,7 +13,8 @@
   input, textarea, select { font-size:16px; padding:6px; width:90%; background:#222; color:#fff; border:1px solid #555; }
   #hs { overflow-x:auto; white-space:nowrap; background:#222; }
   #hs div { display:inline-block; width:120px; height:60px; margin:4px; background:#46a; text-align:center; line-height:60px; }
-  #drag { height:120px; background:#332; position:relative; }
+  /* the page, not Safari, owns a press-and-move here: no scroll, no text selection */
+  #drag { height:120px; background:#332; position:relative; touch-action:none; -webkit-user-select:none; user-select:none; }
   #knob { position:absolute; left:20px; top:40px; width:40px; height:40px; background:#e83; border-radius:20px; }
   #hud { position:fixed; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); color:#0f0;
          font:12px ui-monospace, monospace; padding:4px; pointer-events:none; z-index:9; }
