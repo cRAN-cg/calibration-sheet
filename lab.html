@@ -126,7 +126,7 @@
 
   hello(); targets();
   setTimeout(targets, 400);
-  setInterval(hello, 2000);
+  setInterval(function(){ hello(); targets(); }, 2000);
 })();
 </script>
 </body>
