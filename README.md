@@ -6,13 +6,17 @@ reports what it sees, so a test rig can measure pointer gain, scroll steps,
 tap accuracy and typing from the page itself instead of guessing from
 screenshots.
 
-Live copy: <https://cran-cg.github.io/calibration-sheet/>
+Live copy: <https://cran-cg.github.io/calibration-sheet/> (MIT licensed)
 
 | Page | What it is for |
 |---|---|
 | `calib.html` | a tall page: pointer moves and wheel scrolls are measured from the readings |
 | `lab.html` | tap targets from 60 down to 8 px, a form, a sideways strip, a slider, a draggable knob, links and dialogs |
 | `target.html` | a second page, to test navigation |
+
+These pages are the Probe Pages of [Sampati](https://github.com/cRAN-cg/sampati):
+the rig serves them, and every Guard rule that reads a page is checked against
+what they report.
 
 ## Where readings go
 
@@ -24,8 +28,10 @@ Live copy: <https://cran-cg.github.io/calibration-sheet/>
 - No `?report`, on GitHub Pages or from a file: nothing is sent; the pages only show their readings.
 
 An HTTPS page can only report to an HTTPS address (browsers block plain HTTP
-from it), so a rig on a local network needs an HTTPS tunnel. Expose only the
-rig's `/event` endpoint through it, never its control API.
+from it). To drive these pages from a site served over HTTPS, the rig must
+speak HTTPS itself: give it a name that resolves to its address on your own
+network and a certificate for that name. On GitHub Pages the pages never
+report anywhere unless `?report=` names an address they are allowed to reach.
 
 ## Readings
 
