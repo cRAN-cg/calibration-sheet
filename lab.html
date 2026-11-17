@@ -89,7 +89,7 @@
     });
     send('type=targets&sy=' + Math.round(scrollY) + '&v=' + enc(out.join(' ')));
   }
-  function hello(){ send('type=hello&page=lab&vw=' + innerWidth + '&vh=' + innerHeight + '&sw=' + screen.width + '&sh=' + screen.height + '&dpr=' + devicePixelRatio); }
+  function hello(){ send('type=hello&page=lab&vw=' + innerWidth + '&vh=' + innerHeight + '&sw=' + screen.width + '&sh=' + screen.height + '&dpr=' + devicePixelRatio + '&u=' + enc(location.pathname + location.hash)); }
 
   // taps: which element, and where
   document.addEventListener('click', function(e){
