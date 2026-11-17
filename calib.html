@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>HID calibration</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#0f0;
+               -webkit-user-select:none; user-select:none;
+               font:14px/1.4 ui-monospace, Menlo, monospace; }
+  /* tall: the wheel needs room in both directions */
+  #tall { height: 6000px;
+          background: repeating-linear-gradient(#000 0 99px, #063 99px 100px); }
+  #hud { position:fixed; left:0; right:0; top:0; padding:8px; background:rgba(0,0,0,.85);
+         pointer-events:none; z-index:2; }
+  #hud b { color:#ff0; }
+</style>
+</head>
+<body>
+<div id="hud">calibration page &mdash; leave this in front</div>
+<div id="tall"></div>
+<script>
+(function(){
+  // Everything the calibrator needs, reported by the page itself:
+  //   hello  : which device this is (screen, viewport, dpr, UA)
+  //   hover  : where the pointer is, in CSS px - always including the final
+  //            resting position (trailing send), so "the move has finished"
+  //            can be detected without fixed sleeps
+  //   scroll : scrollY, also with a trailing send
+  var hud = document.getElementById('hud');
+  var seq = 0;
+  function send(q){ seq++; fetch('event?' + q + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
+
+  function hello(){
+    send('type=hello&page=calib' +
+         '&sw=' + screen.width + '&sh=' + screen.height +
+         '&vw=' + innerWidth + '&vh=' + innerHeight +
+         '&dpr=' + (window.devicePixelRatio || 1) +
+         '&touch=' + (navigator.maxTouchPoints || 0) +
+         '&ua=' + encodeURIComponent(navigator.userAgent));
+  }
+
+  function throttled(fn, ms){
+    var last = 0, timer = null, pending = null;
+    return function(arg){
+      pending = arg;
+      var now = Date.now();
+      if (now - last >= ms) { last = now; fn(pending); pending = null; }
+      clearTimeout(timer);
+      timer = setTimeout(function(){ if (pending !== null) { last = Date.now(); fn(pending); pending = null; } }, ms);
+    };
+  }
+
+  var x = null, y = null;
+  var sendHover = throttled(function(p){ send('type=hover&x=' + p[0] + '&y=' + p[1]); }, 40);
+  function onMove(e){
+    x = Math.round(e.clientX); y = Math.round(e.clientY);
+    hud.innerHTML = 'ptr <b>' + x + ',' + y + '</b>  scrollY <b>' + Math.round(scrollY) + '</b>  vw ' + innerWidth + ' vh ' + innerHeight;
+    sendHover([x, y]);
+  }
+  document.addEventListener('pointermove', onMove, true);
+  document.addEventListener('mousemove', onMove, true);
+
+  var sendScroll = throttled(function(v){ send('type=scroll&y=' + v); }, 60);
+  addEventListener('scroll', function(){
+    hud.innerHTML = 'ptr <b>' + x + ',' + y + '</b>  scrollY <b>' + Math.round(scrollY) + '</b>';
+    sendScroll(Math.round(scrollY));
+  }, {passive:true});
+
+  document.addEventListener('click', function(e){
+    send('type=click&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY));
+  }, true);
+
+  // start in the middle of the tall page so the wheel can go both ways
+  scrollTo(0, 3000);
+  hello();
+  setTimeout(hello, 500);
+  setInterval(hello, 2000);   // the calibrator can tell the page is in front
+  // ...and when it is NOT any more: navigating away must not leave a fresh
+  // "hello" behind (measured: the calibrator then skipped opening the page)
+  addEventListener('pagehide', function(){
+    try { navigator.sendBeacon('event?type=bye&page=calib'); } catch (e) {}
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) { try { navigator.sendBeacon('event?type=bye&page=calib'); } catch (e) {} }
+    else hello();
+  });
+})();
+</script>
+</body>
+</html>

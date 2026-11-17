@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>HID lab</title>
+<style>
+  body { margin:0; font:15px/1.35 -apple-system, sans-serif; background:#111; color:#eee; }
+  section { padding:12px; border-bottom:2px solid #333; }
+  h2 { margin:0 0 8px; font-size:14px; color:#9cf; }
+  .row { display:flex; gap:10px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+  .t { background:#2a6; color:#000; border:0; border-radius:4px; padding:0; font:11px sans-serif; }
+  input, textarea, select { font-size:16px; padding:6px; width:90%; background:#222; color:#fff; border:1px solid #555; }
+  #hs { overflow-x:auto; white-space:nowrap; background:#222; }
+  #hs div { display:inline-block; width:120px; height:60px; margin:4px; background:#46a; text-align:center; line-height:60px; }
+  #drag { height:120px; background:#332; position:relative; }
+  #knob { position:absolute; left:20px; top:40px; width:40px; height:40px; background:#e83; border-radius:20px; }
+  #hud { position:fixed; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); color:#0f0;
+         font:12px ui-monospace, monospace; padding:4px; pointer-events:none; z-index:9; }
+  .spacer { height:900px; background:repeating-linear-gradient(#111 0 99px,#035 99px 100px); }
+</style>
+</head>
+<body>
+<section id="taps">
+  <h2>A. tap targets (px)</h2>
+  <div class="row" id="trow1"></div>
+  <div class="row" id="trow2"></div>
+  <div class="row" id="trow3"></div>
+</section>
+<section id="form">
+  <h2>B. form</h2>
+  <form id="f" onsubmit="return false">
+    <input id="name" name="name" placeholder="name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <input id="email" name="email" type="email" placeholder="email" autocomplete="off">
+    <input id="pw" name="pw" type="password" placeholder="password" autocomplete="off">
+    <textarea id="ta" name="ta" rows="2" placeholder="notes" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    <select id="sel" name="sel"><option>alpha</option><option>beta</option><option>gamma</option></select>
+    <label><input id="cb" type="checkbox" style="width:auto"> agree</label>
+    <button id="submit" class="t" style="width:120px;height:44px;font-size:15px">submit</button>
+  </form>
+</section>
+<section id="gest">
+  <h2>C. gestures</h2>
+  <div id="hs"></div>
+  <input id="range" type="range" min="0" max="100" value="10" style="width:90%">
+  <div id="drag"><div id="knob"></div></div>
+</section>
+<section id="nav">
+  <h2>D. navigation</h2>
+  <div class="row">
+    <a id="lnk" href="lab.html#second" style="color:#9cf;font-size:18px">same-page link</a>
+    <a id="lnk2" href="example-target.html" style="color:#9cf;font-size:18px">other page</a>
+    <button id="al" class="t" style="width:90px;height:44px">alert()</button>
+    <button id="cf" class="t" style="width:90px;height:44px">confirm()</button>
+  </div>
+</section>
+<div class="spacer" id="second"></div>
+<div id="hud">lab</div>
+<script>
+(function(){
+  var hud = document.getElementById('hud'), seq = 0;
+  function send(q){ seq++; fetch('event?' + q + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
+  function enc(v){ return encodeURIComponent(v); }
+
+  // A: tap targets of decreasing size, 3 rows
+  var sizes = [60, 44, 32, 24, 16, 12, 8];
+  ['trow1','trow2','trow3'].forEach(function(r, ri){
+    sizes.forEach(function(s){
+      var b = document.createElement('button');
+      b.className = 't'; b.id = 't' + ri + '_' + s; b.textContent = s;
+      b.style.width = s + 'px'; b.style.height = s + 'px';
+      document.getElementById(r).appendChild(b);
+    });
+  });
+  // C: horizontal strip
+  var hs = document.getElementById('hs');
+  for (var i = 0; i < 12; i++) { var d = document.createElement('div'); d.textContent = 'H' + i; hs.appendChild(d); }
+
+  // every element the tests may aim at, with its rectangle in CLIENT px
+  function targets(){
+    var out = [];
+    document.querySelectorAll('button, input, textarea, select, a, #hs, #drag, #knob').forEach(function(el){
+      if (!el.id) return;
+      var r = el.getBoundingClientRect();
+      out.push(el.id + ':' + Math.round(r.left) + ',' + Math.round(r.top) + ',' + Math.round(r.width) + ',' + Math.round(r.height));
+    });
+    send('type=targets&sy=' + Math.round(scrollY) + '&v=' + enc(out.join(' ')));
+  }
+  function hello(){ send('type=hello&page=lab&vw=' + innerWidth + '&vh=' + innerHeight + '&sw=' + screen.width + '&sh=' + screen.height + '&dpr=' + devicePixelRatio); }
+
+  // taps: which element, and where
+  document.addEventListener('click', function(e){
+    var el = e.target, id = el.id || (el.parentElement && el.parentElement.id) || '-';
+    send('type=click&id=' + enc(id) + '&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY));
+    hud.textContent = 'click ' + id + ' @' + Math.round(e.clientX) + ',' + Math.round(e.clientY);
+    if (el.id === 'al') { alert('lab alert'); send('type=alert_closed'); }
+    if (el.id === 'cf') { var ok = confirm('lab confirm'); send('type=confirm&v=' + ok); }
+  }, true);
+  // form values
+  ['name','email','pw','ta','sel','cb'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('input', function(){ send('type=input&id=' + id + '&v=' + enc(el.type === 'checkbox' ? el.checked : el.value)); });
+    el.addEventListener('change', function(){ send('type=change&id=' + id + '&v=' + enc(el.type === 'checkbox' ? el.checked : el.value)); });
+    el.addEventListener('focus', function(){ send('type=focus&id=' + id); });
+  });
+  document.getElementById('f').addEventListener('submit', function(){
+    var fd = new FormData(this), parts = [];
+    fd.forEach(function(v, k){ parts.push(k + '=' + v); });
+    send('type=submit&v=' + enc(parts.join('&')) + '&cb=' + document.getElementById('cb').checked);
+  });
+  // scroll (page and horizontal strip), range, drag
+  var st = null;
+  addEventListener('scroll', function(){ clearTimeout(st); st = setTimeout(function(){ send('type=scroll&y=' + Math.round(scrollY)); targets(); }, 120); }, {passive:true});
+  var ht = null;
+  hs.addEventListener('scroll', function(){ clearTimeout(ht); ht = setTimeout(function(){ send('type=hscroll&x=' + Math.round(hs.scrollLeft)); }, 120); }, {passive:true});
+  document.getElementById('range').addEventListener('input', function(){ send('type=range&v=' + this.value); });
+  var knob = document.getElementById('knob'), drag = document.getElementById('drag'), dragging = false, ox = 0, oy = 0;
+  knob.addEventListener('pointerdown', function(e){ dragging = true; ox = e.clientX - knob.offsetLeft; oy = e.clientY - knob.offsetTop; knob.setPointerCapture(e.pointerId); send('type=drag_start&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY)); });
+  knob.addEventListener('pointermove', function(e){ if (!dragging) return; knob.style.left = (e.clientX - ox) + 'px'; knob.style.top = (e.clientY - oy) + 'px'; });
+  knob.addEventListener('pointerup', function(e){ dragging = false; send('type=drag_end&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY) + '&kx=' + knob.offsetLeft + '&ky=' + knob.offsetTop); });
+  // pointer position (for aiming feedback)
+  var lh = 0;
+  document.addEventListener('pointermove', function(e){ var n = Date.now(); if (n - lh < 40) return; lh = n; send('type=hover&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY)); }, true);
+  addEventListener('hashchange', function(){ send('type=hash&v=' + enc(location.hash)); });
+  addEventListener('pagehide', function(){ try { navigator.sendBeacon('event?type=bye&page=lab'); } catch (e) {} });
+
+  hello(); targets();
+  setTimeout(targets, 400);
+  setInterval(hello, 2000);
+})();
+</script>
+</body>
+</html>
