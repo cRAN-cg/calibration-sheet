@@ -29,7 +29,8 @@
   //   scroll : scrollY, also with a trailing send
   var hud = document.getElementById('hud');
   var seq = 0;
-  function send(q){ seq++; fetch('event?' + q + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
+  var inst = Math.random().toString(36).slice(2, 10);
+  function send(q){ seq++; fetch('event?' + q + '&inst=' + inst + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
 
   function hello(){
     send('type=hello&page=calib' +
@@ -75,14 +76,14 @@
   scrollTo(0, 3000);
   hello();
   setTimeout(hello, 500);
-  setInterval(hello, 2000);   // the calibrator can tell the page is in front
+  setInterval(function(){ if (!document.hidden) hello(); }, 2000);   // the calibrator can tell the page is in front
   // ...and when it is NOT any more: navigating away must not leave a fresh
   // "hello" behind (measured: the calibrator then skipped opening the page)
   addEventListener('pagehide', function(){
-    try { navigator.sendBeacon('event?type=bye&page=calib'); } catch (e) {}
+    try { navigator.sendBeacon('event?type=bye&page=calib&inst=' + inst); } catch (e) {}
   });
   document.addEventListener('visibilitychange', function(){
-    if (document.hidden) { try { navigator.sendBeacon('event?type=bye&page=calib'); } catch (e) {} }
+    if (document.hidden) { try { navigator.sendBeacon('event?type=bye&page=calib&inst=' + inst); } catch (e) {} }
     else hello();
   });
 })();

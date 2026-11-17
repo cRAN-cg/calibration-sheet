@@ -59,7 +59,10 @@
 <script>
 (function(){
   var hud = document.getElementById('hud'), seq = 0;
-  function send(q){ seq++; fetch('event?' + q + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
+  // every report carries this load's instance id: two tabs of the same page
+  // must never be mistaken for one (measured: a background tab kept reporting)
+  var inst = Math.random().toString(36).slice(2, 10);
+  function send(q){ seq++; fetch('event?' + q + '&inst=' + inst + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
   function enc(v){ return encodeURIComponent(v); }
 
   // A: tap targets of decreasing size, 3 rows
@@ -122,11 +125,14 @@
   var lh = 0;
   document.addEventListener('pointermove', function(e){ var n = Date.now(); if (n - lh < 40) return; lh = n; send('type=hover&x=' + Math.round(e.clientX) + '&y=' + Math.round(e.clientY)); }, true);
   addEventListener('hashchange', function(){ send('type=hash&v=' + enc(location.hash)); });
-  addEventListener('pagehide', function(){ try { navigator.sendBeacon('event?type=bye&page=lab'); } catch (e) {} });
+  function bye(){ try { navigator.sendBeacon('event?type=bye&page=lab&inst=' + inst); } catch (e) {} }
+  addEventListener('pagehide', bye);
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) bye(); else { hello(); targets(); } });
 
   hello(); targets();
   setTimeout(targets, 400);
-  setInterval(function(){ hello(); targets(); }, 2000);
+  // a hidden tab (Safari keeps its timers running) reports nothing
+  setInterval(function(){ if (!document.hidden) { hello(); targets(); } }, 2000);
 })();
 </script>
 </body>
