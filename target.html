@@ -3,6 +3,12 @@
 <h1>target page</h1><p>reached from <a href="lab.html" style="color:#9cf">lab.html</a></p>
 <script src="report.js"></script>
 <script>
-Sheet.send('type=hello&page=target');
+// a heartbeat, and a hello on every show: Back/Forward restore this page
+// from Safari's page cache without running it again
+function hello(){ if (!document.hidden) Sheet.send('type=hello&page=target&vw=' + innerWidth + '&vh=' + innerHeight); }
+hello();
+setInterval(hello, 2000);
+addEventListener('pageshow', function(e){ if (e.persisted) hello(); });
 addEventListener('pagehide', function(){ Sheet.beacon('type=bye&page=target'); });
+document.addEventListener('visibilitychange', function(){ if (document.hidden) Sheet.beacon('type=bye&page=target'); else hello(); });
 </script></body></html>

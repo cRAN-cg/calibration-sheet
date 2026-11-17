@@ -49,7 +49,7 @@
 <section id="nav">
   <h2>D. navigation</h2>
   <div class="row">
-    <a id="lnk" href="lab.html#second" style="color:#9cf;font-size:18px">same-page link</a>
+    <a id="lnk" href="#second" style="color:#9cf;font-size:18px">same-page link</a>
     <a id="lnk2" href="target.html" style="color:#9cf;font-size:18px">other page</a>
     <button id="al" class="t" style="width:90px;height:44px">alert()</button>
     <button id="cf" class="t" style="width:90px;height:44px">confirm()</button>
@@ -127,6 +127,7 @@
   addEventListener('hashchange', function(){ send('type=hash&v=' + enc(location.hash)); });
   function bye(){ Sheet.beacon('type=bye&page=lab'); }
   addEventListener('pagehide', bye);
+  addEventListener('pageshow', function(e){ if (e.persisted) { hello(); targets(); } });
   document.addEventListener('visibilitychange', function(){ if (document.hidden) bye(); else { hello(); targets(); } });
 
   hello(); targets();
