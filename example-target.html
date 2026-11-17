@@ -1,7 +1,0 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>lab target</title></head><body style="background:#123;color:#fff;font:20px sans-serif;padding:20px">
-<h1>target page</h1><p>reached from lab.html</p>
-<script>
-fetch('event?type=hello&page=target&seq=1',{cache:'no-store'});
-addEventListener('pagehide',function(){try{navigator.sendBeacon('event?type=bye&page=target')}catch(e){}});
-</script></body></html>

@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calibration sheet: target</title></head><body style="background:#123;color:#fff;font:20px sans-serif;padding:20px">
+<h1>target page</h1><p>reached from <a href="lab.html" style="color:#9cf">lab.html</a></p>
+<script src="report.js"></script>
+<script>
+Sheet.send('type=hello&page=target');
+addEventListener('pagehide', function(){ Sheet.beacon('type=bye&page=target'); });
+</script></body></html>

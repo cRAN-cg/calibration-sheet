@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>HID calibration</title>
+<title>Calibration sheet: pointer</title>
 <style>
   html, body { margin:0; padding:0; background:#000; color:#0f0;
                -webkit-user-select:none; user-select:none;
@@ -17,8 +17,9 @@
 </style>
 </head>
 <body>
-<div id="hud">calibration page &mdash; leave this in front</div>
+<div id="hud">calibration sheet &mdash; leave this in front</div>
 <div id="tall"></div>
+<script src="report.js"></script>
 <script>
 (function(){
   // Everything the calibrator needs, reported by the page itself:
@@ -28,9 +29,7 @@
   //            can be detected without fixed sleeps
   //   scroll : scrollY, also with a trailing send
   var hud = document.getElementById('hud');
-  var seq = 0;
-  var inst = Math.random().toString(36).slice(2, 10);
-  function send(q){ seq++; fetch('event?' + q + '&inst=' + inst + '&seq=' + seq, {cache:'no-store'}).catch(function(){}); }
+  var send = Sheet.send;
 
   function hello(){
     send('type=hello&page=calib' +
@@ -79,11 +78,9 @@
   setInterval(function(){ if (!document.hidden) hello(); }, 2000);   // the calibrator can tell the page is in front
   // ...and when it is NOT any more: navigating away must not leave a fresh
   // "hello" behind (measured: the calibrator then skipped opening the page)
-  addEventListener('pagehide', function(){
-    try { navigator.sendBeacon('event?type=bye&page=calib&inst=' + inst); } catch (e) {}
-  });
+  addEventListener('pagehide', function(){ Sheet.beacon('type=bye&page=calib'); });
   document.addEventListener('visibilitychange', function(){
-    if (document.hidden) { try { navigator.sendBeacon('event?type=bye&page=calib&inst=' + inst); } catch (e) {} }
+    if (document.hidden) Sheet.beacon('type=bye&page=calib');
     else hello();
   });
 })();

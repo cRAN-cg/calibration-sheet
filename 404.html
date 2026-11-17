@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Calibration sheet: not found</title></head>
+<body style="background:#300;color:#fff;font:16px sans-serif;padding:16px">
+<p>No page at <b id="p"></b></p>
+<script>
+// report what was asked for, so a mistyped address is read, not guessed
+document.getElementById('p').textContent = location.pathname + location.search;
+var r = new URLSearchParams(location.search).get('report');
+try { r = r || sessionStorage.getItem('sheet.report'); } catch (e) {}
+if (r) fetch(r.replace(/\/+$/, '') + '/event?type=notfound&path=' + encodeURIComponent(location.pathname + location.search) +
+             '&href=' + encodeURIComponent(location.href), { mode: 'no-cors', cache: 'no-store' }).catch(function () {});
+</script>
+</body></html>
